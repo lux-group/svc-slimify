@@ -1,0 +1,11 @@
+{
+  "name": "svc-slimify-production",
+  "profile": "up-deployer",
+  "regions": ["ap-southeast-2"],
+  "environment": {
+    "APP_ENV": "production"
+  },
+  "error_pages": {
+    "disable": true
+  }
+}

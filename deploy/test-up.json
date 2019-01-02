@@ -1,0 +1,11 @@
+{
+  "name": "svc-slimify-test",
+  "profile": "up-deployer",
+  "regions": ["ap-southeast-2"],
+  "environment": {
+    "APP_ENV": "test"
+  },
+  "error_pages": {
+    "disable": true
+  }
+}
