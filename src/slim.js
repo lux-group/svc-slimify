@@ -2,10 +2,10 @@ let fetch = require('node-fetch');
 const MAX_PAGES = 5;
 
 async function slim(req, res, next) {
-  let url = 'https://api.luxgroup.com' + req.originalUrl.replace('/slim', '');
+  let url = 'https://' + process.env.API_DOMAIN + req.originalUrl.replace('/slim', '');
   console.log("url is", url);
   console.log("url is", req.query);
-  let includes = req.query.includes ? req.query.includes.split('?') : [];
+  let includes = req.query.includes ? req.query.includes.split(',') : [];
   let joined = [];
   try {
     for (let i = 1; i < MAX_PAGES; i++) {

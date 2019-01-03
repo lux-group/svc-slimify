@@ -24,7 +24,7 @@ if [ ! -f ${CONFIG_FILE} ]; then echo "DEPLOYMENT_FAILURE: No config file found 
 
 cp ${CONFIG_FILE} ${ROOT_DIR}/up.json
 
-echo "Deploying svc-calendar to ${ENVIRONMENT}"
+echo "Deploying svc-slimify to ${ENVIRONMENT}"
 
 # Production in the context of up, is not the same as our LE environments
 # it maps to the api gateway stage

@@ -3,7 +3,8 @@
   "profile": "up-deployer",
   "regions": ["ap-southeast-2"],
   "environment": {
-    "APP_ENV": "test"
+    "APP_ENV": "test",
+    "API_DOMAIN": "test-api.luxgroup.com"
   },
   "error_pages": {
     "disable": true
