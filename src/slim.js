@@ -1,20 +1,45 @@
 let fetch = require('node-fetch');
 const MAX_PAGES = 5;
 
-function reduceObject(object, includes, deepIncludes, trim, parentChain) {
+// option 1 - have lowest_price_package, don't have lowest_price_package.something
+// option 2 - have lowest_price_package, have lowest_price_package.something_else
+// option 3 - have lowest_price_package, have lowest_price_package.this
+
+function shouldFollowChain(object, includes, parentChain, key) {
+  // search for parentChain (lowest_price_package) in includes
+  // have something
+  // have what we are searching for
+  let haveFilter = false;
+  let haveSpecific = false;
+  for (let i = 0; i < includes.length; i++) {
+    if (parentChain != "" && includes[i].indexOf(parentChain) == 0) {
+      haveFilter = true;
+    }
+    if (includes[i].indexOf(parentChain + key) == 0) {
+      haveSpecific = true;
+    }
+  }
+  if (haveSpecific) { return true; }
+  if (haveFilter && haveSpecific) { return true; }
+  if (haveFilter && !haveSpecific) { return false; }
+  return false;
+}
+
+function reduceObject(object, includes, trim, parentChain) {
   let reduced = {};
   let obj = Object.entries(object);
   obj.forEach(function(entry) {
     let each_key = entry[0];
     let each_value = entry[1];
+    let foo = shouldFollowChain(each_value, includes, parentChain, each_key);
     if (Array.isArray(each_value) && trim.indexOf(each_key) != -1) {
       reduced[each_key] = [each_value[0]];
-    } else if (deepIncludes[each_key]) {
-      reduced[each_key] = reduceObject(each_value, deepIncludes[each_key], {}, trim, parentChain.concat(each_key));
+    } else if (shouldFollowChain(each_value, includes, parentChain, each_key) && typeof each_value == "object" && !Array.isArray(each_value)) {
+      reduced[each_key] = reduceObject(each_value, includes, trim, parentChain + each_key + ".");
+    } else if (includes.indexOf(parentChain + each_key) != -1) {
+      reduced[each_key] = each_value;
     } else {
-      if (includes.indexOf(each_key) != -1) {
-        reduced[each_key] = each_value;
-      }
+      // not adding to result
     }
   });
   return reduced;
@@ -22,16 +47,8 @@ function reduceObject(object, includes, deepIncludes, trim, parentChain) {
 
 async function slim(req, res, next) {
   let url = 'https://' + process.env.API_DOMAIN + req.originalUrl.replace('/slim', '');
-  console.log("url is", url);
   let includes = req.query.includes ? req.query.includes.split(',') : [];
   let trim = req.query.trim ? req.query.trim.split(',') : [];
-  let nestedIncludes = {};
-  for (let i = 0; i < includes.length; i++) {
-    let splitIncludes = includes[i].split(".");
-    if (splitIncludes.length > 1) {
-      nestedIncludes[splitIncludes[0]] = splitIncludes.slice(1);
-    }
-  }
   let joined = [];
   try {
     for (let i = 1; i < MAX_PAGES; i++) {
@@ -43,7 +60,7 @@ async function slim(req, res, next) {
       let resp_json = await resp.json();
       let result = [];
       for (let i = 0; i < resp_json.result.length; i++) {
-        result.push(reduceObject(resp_json.result[i], includes, nestedIncludes, trim, []));
+        result.push(reduceObject(resp_json.result[i], includes, trim, []));
       }
       joined = joined.concat(result);
       if (!resp_json.result) {
