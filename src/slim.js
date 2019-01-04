@@ -76,6 +76,7 @@ async function slim(req, res, next) {
       message: "Connectivity issue - please retry later"
     });
   }
+  res.set('Cache-Control', 'public, max-age=180');
   return res.json({
     count: joined.length,
     result: joined
