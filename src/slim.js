@@ -52,7 +52,7 @@ async function slim(req, res, next) {
   let trim = req.query.trim ? req.query.trim.split(',') : [];
   let joined = [];
   try {
-    for (let i = 1; i < max_pages; i++) {
+    for (let i = 1; i < max_pages-1; i++) {
       let queryParamChar = "&";
       if (url.indexOf("?") == -1) {
         queryParamChar = "?"
