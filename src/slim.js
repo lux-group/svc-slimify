@@ -48,10 +48,11 @@ function reduceObject(object, includes, trim, parentChain) {
 async function slim(req, res, next) {
   let url = 'https://' + process.env.API_DOMAIN + req.originalUrl.replace('/slim', '');
   let includes = req.query.includes ? req.query.includes.split(',') : [];
+  let max_pages = req.query.max_pages || MAX_PAGES;
   let trim = req.query.trim ? req.query.trim.split(',') : [];
   let joined = [];
   try {
-    for (let i = 1; i < MAX_PAGES; i++) {
+    for (let i = 1; i < max_pages; i++) {
       let queryParamChar = "&";
       if (url.indexOf("?") == -1) {
         queryParamChar = "?"
