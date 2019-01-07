@@ -34,7 +34,7 @@ function reduceObject(object, includes, trim, parentChain) {
     let foo = shouldFollowChain(each_value, includes, parentChain, each_key);
     if (Array.isArray(each_value) && trim.indexOf(each_key) != -1) {
       reduced[each_key] = [each_value[0]];
-    } else if (shouldFollowChain(each_value, includes, parentChain, each_key) && typeof each_value == "object" && !Array.isArray(each_value)) {
+    } else if (shouldFollowChain(each_value, includes, parentChain, each_key) && typeof each_value == "object" && !Array.isArray(each_value) && each_value != null) {
       reduced[each_key] = reduceObject(each_value, includes, trim, parentChain + each_key + ".");
     } else if (includes.indexOf(parentChain + each_key) != -1) {
       reduced[each_key] = each_value;
@@ -48,7 +48,7 @@ function reduceObject(object, includes, trim, parentChain) {
 async function slim(req, res, next) {
   let url = 'https://' + process.env.API_DOMAIN + req.originalUrl.replace('/slim', '');
   let includes = req.query.includes ? req.query.includes.split(',') : [];
-  let max_pages = req.query.max_pages || MAX_PAGES;
+  let max_pages = Number(req.query.max_pages) || MAX_PAGES;
   let trim = req.query.trim ? req.query.trim.split(',') : [];
   let joined = [];
   try {
@@ -74,12 +74,14 @@ async function slim(req, res, next) {
   } catch (err) {
     console.log("Unable to reach ", url, err);
     return res.status(503).json({
-      message: "Connectivity issue - please retry later"
+      message: "Connectivity issue - please retry later",
+      status: 503
     });
   }
   res.set('Cache-Control', 'public, max-age=180');
   return res.json({
     count: joined.length,
+    status: 200,
     result: joined
   });
 }
