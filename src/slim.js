@@ -36,6 +36,8 @@ function reduceObject(object, includes, trim, parentChain) {
       reduced[each_key] = [each_value[0]];
     } else if (shouldFollowChain(each_value, includes, parentChain, each_key) && typeof each_value == "object" && !Array.isArray(each_value) && each_value != null) {
       reduced[each_key] = reduceObject(each_value, includes, trim, parentChain + each_key + ".");
+    } else if (shouldFollowChain(each_value, includes, parentChain, each_key) && Array.isArray(each_value)) {
+      reduced[each_key] = each_value.map(v => reduceObject(v, includes, trim, parentChain + each_key + "."));
     } else if (includes.indexOf(parentChain + each_key) != -1) {
       reduced[each_key] = each_value;
     } else {
@@ -51,6 +53,7 @@ async function slim(req, res, next) {
   let max_pages = Number(req.query.max_pages) || MAX_PAGES;
   let trim = req.query.trim ? req.query.trim.split(',') : [];
   let joined = [];
+  let singleResult = {};
   try {
     for (let i = 1; i < max_pages+1; i++) {
       let queryParamChar = "&";
@@ -59,15 +62,21 @@ async function slim(req, res, next) {
       }
       let resp = await fetch(url + queryParamChar + "page=" + i);
       let resp_json = await resp.json();
-      let result = [];
-      for (let i = 0; i < resp_json.result.length; i++) {
-        result.push(reduceObject(resp_json.result[i], includes, trim, []));
+
+      if (Array.isArray(resp_json.result)) {
+        let result = [];
+        for (let i = 0; i < resp_json.result.length; i++) {
+          result.push(reduceObject(resp_json.result[i], includes, trim, []));
+        }
+        joined = joined.concat(result);
+      } else {
+        singleResult = reduceObject(resp_json.result, includes, trim, [])
       }
-      joined = joined.concat(result);
+
       if (!resp_json.result) {
         return res.status(resp_json.status).json(resp_json);
       }
-      if (resp_json.count == 0 ) {
+      if (!resp_json.count) {
         break;
       }
     }
@@ -79,11 +88,19 @@ async function slim(req, res, next) {
     });
   }
   res.set('Cache-Control', 'public, max-age=180');
-  return res.json({
-    count: joined.length,
-    status: 200,
-    result: joined
-  });
+
+  if (singleResult) {
+    return res.json({
+      status: 200,
+      result: singleResult
+    });
+  } else {
+    return res.json({
+      count: joined.length,
+      status: 200,
+      result: joined
+    });
+  }
 }
 
 module.exports = slim;
