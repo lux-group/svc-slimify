@@ -53,7 +53,7 @@ async function slim(req, res, next) {
   let max_pages = Number(req.query.max_pages) || MAX_PAGES;
   let trim = req.query.trim ? req.query.trim.split(',') : [];
   let joined = [];
-  let singleResult = {};
+  let singleResult = null;
   try {
     for (let i = 1; i < max_pages+1; i++) {
       let queryParamChar = "&";
